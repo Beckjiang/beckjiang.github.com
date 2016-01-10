@@ -399,6 +399,16 @@
 <li>执行<code>hexo clean</code></li>
 <li>重新生成<code>hexo g</code></li>
 </ol>
+<p>更详细的安装配置说明：<br><a href="https://github.com/hexojs/hexo" target="_blank" rel="external">hexojs/hexo</a><br><a href="http://theme-next.iissnan.com/" target="_blank" rel="external">NexT主题</a></p>
+<p><strong>常用命令：</strong><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo new &#34;postName&#34; #&#26032;&#24314;&#25991;&#31456;&#10;hexo new page &#34;pageName&#34; #&#26032;&#24314;&#39029;&#38754;&#10;hexo generate #&#29983;&#25104;&#38745;&#24577;&#39029;&#38754;&#33267;public&#30446;&#24405;&#10;hexo server #&#24320;&#21551;&#39044;&#35272;&#35775;&#38382;&#31471;&#21475;&#65288;&#40664;&#35748;&#31471;&#21475;4000&#65292;&#39;ctrl + c&#39;&#20851;&#38381;server&#65289;&#10;hexo deploy #&#23558;.deploy&#30446;&#24405;&#37096;&#32626;&#21040;GitHub</span><br></pre></td></tr></table></figure></p>
+<p><strong>常用复合命令：</strong><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo deploy -g&#10;hexo server -g</span><br></pre></td></tr></table></figure></p>
+<p><strong>简写：</strong><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo n == hexo new&#10;hexo g == hexo generate&#10;hexo s == hexo server&#10;hexo d == hexo deploy</span><br></pre></td></tr></table></figure></p>
+<p><strong>部署到git</strong><br>编辑 <strong>站点配置</strong> 你在部署时，要把下面的<code>zippera</code>都换成你的账号名。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">deploy: &#10;  type: git&#10;  repository: http://github.com/Beckjiang/beckjiang.github.com.git&#10;  branch: master</span><br></pre></td></tr></table></figure></p>
+<p>此处需要注意hexo在3.0版本以后，做如下改动：</p>
+<ol>
+<li>安装 npm install hexo-deployer-git –save</li>
+<li>将deploy 的 type由github改为git</li>
+</ol>
 
             
           </span>
