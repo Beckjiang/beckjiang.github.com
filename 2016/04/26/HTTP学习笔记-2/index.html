@@ -1,0 +1,871 @@
+<!doctype html>
+<html class="theme-next   use-motion ">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.googleapis.com/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.4.5.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="HTTP," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=0.4.5.2" />
+
+
+
+
+
+
+<meta name="description" content="五、与HTTP协作的web服务器
+
+HTTP/1.1 规范允许一台HTTP服务器搭建多个web站点，即在相同IP地址下，由于虚拟主机可以寄存多个不同主机名和域名的网站。因此发送HTTP请求时，必须在Host首部内完整指定主机名或域名的URI
+通信数据转发程序：
+代理：一种有转发功能的应用程序，扮演着服务器与客户端的“中间人”。
+基本行为：不改变请求URI，直接转发。
+转发时，需要附加Via首部字段">
+<meta property="og:type" content="article">
+<meta property="og:title" content="HTTP学习笔记#2">
+<meta property="og:url" content="http://beckjiang.github.io/2016/04/26/HTTP学习笔记-2/index.html">
+<meta property="og:site_name" content="Lucky Chick">
+<meta property="og:description" content="五、与HTTP协作的web服务器
+
+HTTP/1.1 规范允许一台HTTP服务器搭建多个web站点，即在相同IP地址下，由于虚拟主机可以寄存多个不同主机名和域名的网站。因此发送HTTP请求时，必须在Host首部内完整指定主机名或域名的URI
+通信数据转发程序：
+代理：一种有转发功能的应用程序，扮演着服务器与客户端的“中间人”。
+基本行为：不改变请求URI，直接转发。
+转发时，需要附加Via首部字段">
+<meta property="og:updated_time" content="2016-04-25T17:15:43.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="HTTP学习笔记#2">
+<meta name="twitter:description" content="五、与HTTP协作的web服务器
+
+HTTP/1.1 规范允许一台HTTP服务器搭建多个web站点，即在相同IP地址下，由于虚拟主机可以寄存多个不同主机名和域名的网站。因此发送HTTP请求时，必须在Host首部内完整指定主机名或域名的URI
+通信数据转发程序：
+代理：一种有转发功能的应用程序，扮演着服务器与客户端的“中间人”。
+基本行为：不改变请求URI，直接转发。
+转发时，需要附加Via首部字段">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: 'post',
+    motion: true
+  };
+</script>
+
+  <title> HTTP学习笔记#2 | Lucky Chick </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  <!--[if lte IE 8]>
+  <div style=' clear: both; height: 59px; padding:0 0 0 15px; position: relative;margin:0 auto;'>
+    <a href="http://windows.microsoft.com/en-US/internet-explorer/products/ie/home?ocid=ie6_countdown_bannercode">
+      <img src="http://7u2nvr.com1.z0.glb.clouddn.com/picouterie.jpg" border="0" height="42" width="820"
+           alt="You are using an outdated browser. For a faster, safer browsing experience, upgrade for free today or use other browser ,like chrome firefox safari."
+           style='margin-left:auto;margin-right:auto;display: block;'/>
+    </a>
+  </div>
+<![endif]-->
+  
+
+
+
+
+
+
+  <div class="container one-column page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Lucky Chick</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">Enjoy Thinking, Creating and Coding (PHP Linux Javascript React ...)</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu ">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-th fa-fw"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-tags fa-fw"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-user fa-fw"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div id="content" class="content">
+          
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                HTTP学习笔记#2
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            发表于
+            <time itemprop="dateCreated" datetime="2016-04-26T01:13:48+08:00" content="2016-04-26">
+              2016-04-26
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp; 分类于
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/HTTP/" itemprop="url" rel="index">
+                    <span itemprop="name">HTTP</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/04/26/HTTP学习笔记-2/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/04/26/HTTP学习笔记-2/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body">
+
+      
+      
+
+      
+        <span itemprop="articleBody"><p>五、与HTTP协作的web服务器</p>
+<ol>
+<li>HTTP/1.1 规范允许一台HTTP服务器搭建多个web站点，即在相同IP地址下，由于虚拟主机可以寄存多个不同主机名和域名的网站。因此<strong>发送HTTP请求时，必须在Host首部内完整指定主机名或域名的URI</strong></li>
+<li>通信数据转发程序：<ul>
+<li>代理：一种有转发功能的应用程序，扮演着服务器与客户端的“中间人”。<ul>
+<li>基本行为：<strong>不改变请求URI，直接转发</strong>。</li>
+<li>转发时，需要附加Via首部字段以标记出经过的主机信息。</li>
+<li>代理按两种基准分类。一种：<strong>是否使用缓存</strong>，另一种：<strong>是否修改报文</strong>。（缓存代理、透明代理）</li>
+<li>缓存代理：代理转发时，缓存代理会预先将资源缓存在代理服务器上。</li>
+<li>透明代理：转发请求或响应式，不对报文做任何加工的代理。反之，称为非透明代理。</li>
+</ul>
+</li>
+<li>网关：<strong>转发其他服务器通信数据的服务器。接收从客户端发来的请求时，它就像自己拥有资源的原服务器一样对请求进行处理</strong><ul>
+<li>工作机制与代理相似，区别在于：<strong>网关能使通信线路上的服务器提供非HTTP协议服务</strong></li>
+<li><strong>利用网关提高通信的安全性</strong>，因为可以在客户端与网关之间的通信新路上加密以确保连接的安全。</li>
+</ul>
+</li>
+<li>隧道：可按要求建立起一条与其他服务器的通信线路，届时使用SSL等加密手段进行通信。<ul>
+<li><strong>目的是确保客户端能与服务器进行安全的通信</strong>。</li>
+<li><strong>隧道本身不会去解析HTTP请求</strong>。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<p>六、HTTP首部</p>
+<ol>
+<li>请求报文首部<ul>
+<li>请求行（方法、URI、HTTP版本）</li>
+<li>请求首部字段</li>
+<li>通用首部字段</li>
+<li>实体首部字段</li>
+<li>其他</li>
+</ul>
+</li>
+<li>响应报文首部<ul>
+<li>状态行（HTTP版本、状态码）</li>
+<li>响应首部字段</li>
+<li>通用首部字段</li>
+<li>实体首部字段</li>
+<li>其他</li>
+</ul>
+</li>
+<li>首部字段结构<ul>
+<li>字段名和字段值构成，中间用冒号<code>Content-Type: text/html</code></li>
+<li>字段值对应单个HTTP首部字段<strong>可以有多个值</strong><code>Keep-Alive: timeout=15, max=100</code></li>
+</ul>
+</li>
+<li>End-to-end 首部和Hop-by-hop 首部<ul>
+<li><strong>端到端首部（End-to-end Header）</strong><br>分在此类别中的首部回转发给请求/响应对应的最终接收目标，且必须保存在由缓存生成的响应中，另外规定它必须转发。</li>
+<li><strong>逐跳首部（Hop-by-hop Header）</strong><br>分在此类别的首部支队单词转发有效，会因通过缓存活代理而不再转发。HTTP/1.1和之后版本汇总，<strong>如果要使用hop-by-hop首部，需提供Connection首部字段</strong>。</li>
+<li>除了以下字段都属于端到端首部：<ul>
+<li>Connection</li>
+<li>Keep-Alive</li>
+<li>Proxy-Authenticate</li>
+<li>Proxy-Authorization</li>
+<li>Trailer</li>
+<li>TE</li>
+<li>Transfer-Encoding</li>
+<li>Upgrade</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>HTTP/1.1通用首部字段<br><strong>Cache-Control</strong>：操作缓存的工作机制</p>
+<ul>
+<li>表示是否缓存的指令<ul>
+<li><code>public</code>：明确表明其他用户也可利用缓存。</li>
+<li><code>private</code>：缓存服务器会对该特定用户提供资源缓存的服务，而其他用户发送过来的请求不会返回缓存，与public相反。</li>
+<li><strong><code>no-cache</code>：为了防止从缓存中返回过期的资源</strong>。</li>
+<li><strong><code>no-store</code>：规定缓存不能在本地存储请求或响应的任一部分</strong>。<br><em>说明：从字面上很容易把no-cache误解为不缓存，但其实no-cache代表不缓存过期的资源，缓存会向源服务器进行有效期确认后处理资源。no-store才是真正地不进行缓存。</em></li>
+</ul>
+</li>
+<li>指定缓存期限和认证的指令<ul>
+<li><code>Cache-Control: max-age=604800</code>，如果判定缓存资源的缓存时间数值比max-age值小，客户端就接收缓存的资源。当max-age为0时，缓存服务器通常需要将请求转发给源服务器。</li>
+<li><code>Cache-Control: s-maxage=604800</code>，与max-age相同，不同点时s-maxage只适用于多位用户使用的公共缓存服务器（代理）。当使用s-maxage指令后，会忽略Expires首部字段以及max-age指令处理。</li>
+<li><code>Cache-Control: min-fresh=60</code>，要求缓存服务器返回至少还没过指定时间的缓存资源。</li>
+<li><code>Cache-Control: max-stale=3600</code>，指缓存资源，即使过期也照常接收。</li>
+<li><code>Cache-Control: only-if-cached</code>，要求缓存服务器不重新加载响应，也不会再次确认资源有效性。如果请求缓存服务器的本地缓存无响应，则返回504。</li>
+<li><code>Cache-Control: must-revalidate</code>，代理会向资源服务器再次验证即将返回的响应缓存是否有效。使用该指令会忽略max-stale。</li>
+<li><code>Cache-Control: proxy-revalidate</code>，缓存服务器收到请求，必须再次验证缓存有效性。</li>
+<li><code>Cache-Control: no-transform</code>，缓存不能改变实体主体的媒体类型。可防止缓存或代理压缩图片等类似操作。</li>
+</ul>
+</li>
+</ul>
+<p><strong>Connection</strong></p>
+<ul>
+<li><strong>控制不再转发给代理的首部字段</strong><br><code>Connection: 不在转发的首部字段名</code></li>
+<li><strong>管理持久连接</strong><br><code>Connection: close</code>，当服务端明确断开连接是，则指定Connection首部字段的值为Close。<br><code>Connection: Keep-Alive</code>，<strong>HTTP/1.1默认连接为持久连接</strong>。</li>
+</ul>
+<p><strong>Data</strong>：<strong>表示创建HTTP报文的日期和时间</strong>，时间格式：<code>Date: Tue, 03 Jul 2012 04:40:59 GMT</code></p>
+<p><strong>Pragma</strong>：HTTP/1.1之前版本的历史遗留字段，<code>Pragma: no-cache</code>。<strong>类似<code>Cache-Control: no-cache</code></strong></p>
+<p><strong>Trailer</strong>：说明：Trailer会事先说明报文主体后记录了哪些首部字段。该首部字段可应用在HTTP/1.1版本分块传输编码时。</p>
+<p><strong>Transfer-Encoding</strong></p>
+<ul>
+<li>规定了传输报文主体时采用的编码方式。</li>
+<li>HTTP/1.1的传输编码方式仅对分块传输编码有效。</li>
+</ul>
+<p><strong>Upgrade</strong></p>
+<ul>
+<li>用于检测HTTP协议及其他协议是否可使用更高的版本进行通讯，其参数值可以用来制定一个完全不同的通信协议。</li>
+<li>使用首部字段Upgrade时，还需额外制定<code>Connection: Upgrade</code></li>
+</ul>
+<p><strong>Via</strong></p>
+<ul>
+<li>报文经过代理或网关时，会先在首部字段Via中附加该服务器的信息，然后再转发。</li>
+<li>Via不仅用于追踪报文的转发，还可避免请求回环的发生。</li>
+</ul>
+<p><strong>Warning</strong></p>
+<ul>
+<li>从HTTP/1.0的响应首部（Retry-After）演变过来，告知用户一些与缓存相关的问题和警告。</li>
+<li>格式：<code>Warning: [警告码] [警告的主机:端口号]</code> “[警告内容]” ([日期时间])</li>
+<li><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">110  Response is stale  &#20195;&#29702;&#36820;&#22238;&#24050;&#36807;&#26399;&#30340;&#36164;&#28304;&#10;111  Revalidation failed  &#20195;&#29702;&#20877;&#39564;&#35777;&#36164;&#28304;&#26377;&#25928;&#24615;&#26102;&#22833;&#36133;&#65288;&#26381;&#21153;&#22120;&#26080;&#27861;&#21040;&#36798;&#31561;&#21407;&#22240;&#65289;&#10;112  Disconnection operation  &#20195;&#29702;&#19982;&#20114;&#32852;&#32593;&#36830;&#25509;&#34987;&#25925;&#24847;&#20999;&#26029;&#10;113  Heuristic expiration  &#21709;&#24212;&#30340;&#20351;&#29992;&#26399;&#36229;&#36807;24&#23567;&#26102;&#10;199  Miscellaneous warning  &#20219;&#24847;&#30340;&#35686;&#21578;&#20869;&#23481;&#10;214  Transformation applied  &#20195;&#29702;&#23545;&#20869;&#23481;&#32534;&#30721;&#25110;&#23186;&#20307;&#31867;&#22411;&#31561;&#25191;&#34892;&#20102;&#26576;&#20123;&#22788;&#29702;&#26102;&#10;299  Miscellaneous persistent warning  &#20219;&#24847;&#30340;&#35686;&#21578;&#20869;&#23481;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li><p>请求首部字段<br><strong>Accept</strong></p>
+<ul>
+<li>告诉服务器，用户代理能够处理的媒体类型及媒体类型的相对优先级。</li>
+<li>可使用<code>type/subtype</code>这种形式，一次指定多种媒体类型。q代表权重，范围是0~1<br><code>Accept: text/html,application/Xhtml+xml,application/xml;q=0.9,*/*;q=0.8</code></li>
+</ul>
+<p><strong>Accept-Charset</strong>：用来通知服务器用户代理支持的<strong>字符集及字符集的相对优先级</strong></p>
+<p><strong>Accept-Encoding</strong></p>
+<ul>
+<li>用来告知服务器用户代理支持的<strong>内容编码及内容编码的优先级顺序</strong></li>
+<li><code>Accept-Encoding: gzip, deflate</code></li>
+</ul>
+<p><strong>Accept-Language</strong>：告知服务器用户代理能够处理的<strong>自然语言集，以及相对优先级</strong></p>
+<p><strong>Authorization</strong>：用来告知服务器，用户代理的认证信息。</p>
+<p><strong>Except</strong>：告知服务器，期望出现的某种特定行为。</p>
+<p><strong>From</strong>：告知服务器使用用户代理的用户的电子邮件地址。</p>
+<p><strong>Host</strong>：告知服务器请求的资源所处的互联网主机名和端口号。</p>
+<p><strong>If-Match</strong></p>
+<ul>
+<li>只有当If-Match的字段值根ETag值匹配一致时，服务器才会接受请求。反之，返回412状态吗</li>
+<li>如果使（*）指定If-Match的字段值，服务器将会忽略ETag，只要资源存在就处理请求。</li>
+</ul>
+<p><strong>If-Modified-Since</strong>：如果在If-Modified-Since字段指定的日期时间后，资源发生了更新，服务器会接受请求。</p>
+<p><strong>If-None-Match</strong>：只有在If-None-Match的字段值与ETag值不一致时，可处理请求。与If-Match首部字段的作用相反。</p>
+<p><strong>If-Range</strong>：告知服务器若指定的If-Range字段值和请求资源的ETag值或时间一致时，则作为范围请求处理。反之，则返回全体资源。</p>
+<p><strong>If-Unmodified-Since</strong>：与If-Modified-Since相反。<br><strong>Max-Forwards</strong>：转发数，每次转发值减1.当值变0时，返回响应。<br><strong>Proxy-Authorization</strong></p>
+<ul>
+<li>接收到从代理服务器发来的认证质询时，客户端会发送包含首部字段Proxy-Authorization的请求，以告知服务器认证需要的信息。</li>
+<li>注意：认证行为发生在客户端与代理之间。</li>
+</ul>
+<p><strong>Range</strong>：返回资源的指定范围<br><strong>Referer</strong>：告知服务器请求的原始资源的URL<br><strong>TE</strong>：告知服务器客户端能够处理响应的传输编码方式及相对优先级，与Accept-Encoding功能相似，但是用于传输编码。<br><strong>User-Agent</strong>，告知服务器创建请求的浏览器和用户代理名称等信息。</p>
+</li>
+<li><p>响应首部字段<br><strong>Accept-Ranges</strong></p>
+<ul>
+<li>告知客户端服务器是否能处理范围请求</li>
+<li>可指定的字段值有：可处理范围请求时指定其为bytes，反之则指定其为none。</li>
+</ul>
+<p><strong>Age</strong>：告知客户端，源服务器在多久前创建了响应。字段值的单位为秒。<br><strong>ETag</strong>：</p>
+<ul>
+<li>一种可将资源以字符串形式做唯一标识的方式。</li>
+<li>资源更新时，ETag需要更新。</li>
+<li>强ETag值，不论实体发生多么细微的变化都会改变其值。<code>ETag: &quot;usagi-1234&quot;</code></li>
+<li>弱ETag值，只有资源发生了根本改变，才会改变ETag值。在字段值最开始附加W <code>ETag: W/&quot;usagi-1234&quot;</code></li>
+</ul>
+<p><strong>Location</strong>：重定向。<br><strong>Proxy-Authenticate</strong>：会把由代理服务器所要求的认证信息发送给客户端。<br><strong>Retry-After</strong>：告诉客户端应该多久之后再次发送请求。<br><strong>Server</strong>：告诉客户端服务器上安装的HTTP服务器应用程序的信息。<br><strong>Vary</strong>：首部字段Vary可对缓存进行控制。当Vary字段值为Accept-Language，那么只有对持相同自然语言的请求返回缓存。<br><strong>WWW-Authenticate</strong>：用于HTTP访问认证。</p>
+</li>
+<li><p>实体首部字段<br><strong>Allow</strong>：通知客户端能够支持Request-URI指定资源的HTTP方法。<br><strong>Content-Encoding</strong>：</p>
+<ul>
+<li>告知客户端服务器对实体的主体部分选用的内容编码方式。内容编码是值在不丢失实体信息的前提下所进行的压缩。</li>
+<li>主要采用以下4种内容编码的方式。（gzip、compress、deflate、identity）</li>
+</ul>
+<p><strong>Content-Language</strong>：告知客户端，实体主体使用的自然语言。<br><strong>Content-Length</strong>：表明实体主体部分的大小，单位是字节。<br><strong>Content-Location</strong>：表示报文主体返回资源对应的URI。<br><strong>Content-MD5</strong>：该字段的值是一串MD5算法生成的值，目的在于检查报文主体在传输过程中是否保持完整。<br><strong>Content-Range</strong>：针对范围的请求，返回响应时使用的首部字段Content-Range，能告知客户端作为响应返回的实体的哪个部分符合范围请求。<br><strong>Content-Type</strong>：说明了实体主体内对象的媒体类型。<br><strong>Expires</strong>：告知客户端资源实效日期，实效前，响应的副本会一直被保存。<br><strong>Last-Modified</strong>：资源最终修改的时间。</p>
+</li>
+<li><p>为Cookie服务的首部字段<br><strong>Set-Cookie</strong>：开始状态管理所使用的Cookie信息，响应首部字段</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">NAME=VALUE  &#36171;&#20104;Cookie&#30340;&#21517;&#31216;&#21644;&#20854;&#20540;&#65288;&#24517;&#38656;&#39033;&#65289;&#12290;&#10;expires=DATE  Cookie&#30340;&#26377;&#25928;&#26399;&#65292;&#40664;&#35748;&#20026;&#27983;&#35272;&#22120;&#20851;&#38381;&#21069;&#20026;&#27490;&#12290;&#10;path=PATH  &#23558;&#26381;&#21153;&#22120;&#19978;&#30340;&#25991;&#20214;&#30446;&#24405;&#20316;&#20026;Cookie&#30340;&#36866;&#29992;&#23545;&#35937;&#12290;&#10;domain=&#22495;&#21517;  &#20316;&#20026;Cookie&#36866;&#29992;&#23545;&#35937;&#30340;&#22495;&#21517;&#65292;&#21487;&#35774;&#32622;domain&#29992;&#20110;&#36328;&#22495;&#25805;&#20316;&#12290;&#10;Secure  &#20165;&#22312;HTTPS&#23433;&#20840;&#36890;&#20449;&#26102;&#25165;&#20250;&#21457;&#36865;Cookie&#12290;&#10;HttpOnly  &#21152;&#20197;&#38480;&#21046;&#65292;&#20351;Cookie&#19981;&#33021;&#34987;JavaScript&#33050;&#26412;&#35775;&#38382;&#12290;</span><br></pre></td></tr></table></figure>
+<p><strong>Cookie</strong>：服务器接收到的Cookie信息，请求首部字段</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Cookie: status=enable</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>首部字段Cookie会告知服务器，当客户端想要获得HTTP状态管理支持时，就会在请求中包含从服务器接收到的Cookie。</p>
+<ol>
+<li>其他首部字段<br><strong>X-Frame-Options</strong>：用于控制网站内在其他Web网站的Frame标签内的显示问题，目的是为了防止点击劫持攻击。有两个值：<strong>DENY</strong>，拒绝；<strong>SAMEORIGIN</strong>,仅同源域名下的页面匹配时许可。<br><strong>X-XSS-Protection</strong>：针对跨站脚本攻击的一种对策。0:将XSS过滤设置成无效状态，1:相反。<br><strong>DNT</strong>：Do Not Track，意为拒绝个人信息被收集，是表示拒绝被精准广告追踪的一种方法。0:同意被追踪，1:拒绝被追踪。<br><strong>P3P</strong>：通过利用P3P（The Platform for Privacy Preferences，在线隐私偏好平台）技术，可以让Web网站上的个人隐私变成一种仅供程序可理解的形式，以达到保护用户隐私的目的。</li>
+</ol>
+</span>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/HTTP/" rel="tag">#HTTP</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/04/08/HTTP学习笔记-1/" rel="next" title="HTTP学习笔记#1">
+                <i class="fa fa-chevron-left"></i> HTTP学习笔记#1
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+        </div>
+
+        
+
+
+        
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/04/26/HTTP学习笔记-2/"
+           data-title="HTTP学习笔记#2" data-url="http://beckjiang.github.io/2016/04/26/HTTP学习笔记-2/">
+      </div>
+    
+  </div>
+
+
+      </div>
+
+      
+        
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" src="http://d01.res.meilishuo.net/pic/_o/65/43/3a0461bc73c036adba76491d50f1_500_500.c1.jpg" alt="Beck Jiang" itemprop="image"/>
+          <p class="site-author-name" itemprop="name">Beck Jiang</p>
+        </div>
+        <p class="site-description motion-element" itemprop="description">求知若饥 虚心若愚</p>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">4</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          <div class="site-state-item site-state-categories">
+            <a href="/categories">
+              <span class="site-state-item-count">4</span>
+              <span class="site-state-item-name">分类</span>
+              </a>
+          </div>
+
+          <div class="site-state-item site-state-tags">
+            <a href="/tags">
+              <span class="site-state-item-count">6</span>
+              <span class="site-state-item-name">标签</span>
+              </a>
+          </div>
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator">
+            <i class="fa fa-angle-double-up"></i>
+          </div>
+          <div class="post-toc">
+            
+              
+            
+            
+              <p class="post-toc-empty">此文章未包含目录</p>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator">
+            <i class="fa fa-angle-double-down"></i>
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+      
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="icon-next-heart fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Beck Jiang</span>
+</div>
+
+<div class="powered-by">
+  Power by <a class="theme-link" href="http://hexo.io">Hexo</a> 
+</div>
+
+<div class="theme-info">
+  Base on -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top"></div>
+  </div>
+
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  
+
+  
+    
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"beckjiang"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+    
+     
+
+
+    
+  
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript" src="/js/fancy-box.js?v=0.4.5.2"></script>
+
+
+  <script type="text/javascript" src="/js/helpers.js?v=0.4.5.2"></script>
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+<script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+<script type="text/javascript" src="/js/motion.js?v=0.4.5.2" id="motion.global"></script>
+
+
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  
+<script type="text/javascript" src="/js/bootstrap.scrollspy.js?v=0.4.5.2" id="bootstrap.scrollspy.custom"></script>
+
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 1 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    motionMiddleWares.sidebar = function () {
+      var $tocContent = $('.post-toc-content');
+      if (CONFIG.sidebar === 'post') {
+        if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+          displaySidebar();
+        }
+      }
+    };
+  });
+</script>
+
+
+
+  <script type="text/javascript" src="/js/bootstrap.js"></script>
+
+  
+  
+
+  
+  
+
+</body>
+</html>
