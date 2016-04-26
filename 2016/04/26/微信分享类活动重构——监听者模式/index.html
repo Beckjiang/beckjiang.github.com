@@ -1,0 +1,748 @@
+<!doctype html>
+<html class="theme-next   use-motion ">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.googleapis.com/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.4.5.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="PHP," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=0.4.5.2" />
+
+
+
+
+
+
+<meta name="description" content="前言在微信朋友圈中经常见到一种诱导分享型的活动，活动规则如：分享给3位好友，即可开启礼包，领取优惠券。整个流程大致分为：领取任务、朋友或自己帮忙执行任务、兑换奖品。因此我把它定义为任务型活动。
+在实现这类型活动的后端接口时，以最直接的MVC去实现了。但这样的活动，一两个月来一次，每次的任务规则，和兑换条件又有些许不一样。于是，顺其自然的在原有的基础上去增加case去区分逻辑，这样的处理方式使得Mo">
+<meta property="og:type" content="article">
+<meta property="og:title" content="微信分享类活动重构——监听者模式">
+<meta property="og:url" content="http://beckjiang.github.io/2016/04/26/微信分享类活动重构——监听者模式/index.html">
+<meta property="og:site_name" content="Lucky Chick">
+<meta property="og:description" content="前言在微信朋友圈中经常见到一种诱导分享型的活动，活动规则如：分享给3位好友，即可开启礼包，领取优惠券。整个流程大致分为：领取任务、朋友或自己帮忙执行任务、兑换奖品。因此我把它定义为任务型活动。
+在实现这类型活动的后端接口时，以最直接的MVC去实现了。但这样的活动，一两个月来一次，每次的任务规则，和兑换条件又有些许不一样。于是，顺其自然的在原有的基础上去增加case去区分逻辑，这样的处理方式使得Mo">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/1413727-d57fa2bdfe1404ed.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:updated_time" content="2016-04-26T15:38:53.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="微信分享类活动重构——监听者模式">
+<meta name="twitter:description" content="前言在微信朋友圈中经常见到一种诱导分享型的活动，活动规则如：分享给3位好友，即可开启礼包，领取优惠券。整个流程大致分为：领取任务、朋友或自己帮忙执行任务、兑换奖品。因此我把它定义为任务型活动。
+在实现这类型活动的后端接口时，以最直接的MVC去实现了。但这样的活动，一两个月来一次，每次的任务规则，和兑换条件又有些许不一样。于是，顺其自然的在原有的基础上去增加case去区分逻辑，这样的处理方式使得Mo">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: 'post',
+    motion: true
+  };
+</script>
+
+  <title> 微信分享类活动重构——监听者模式 | Lucky Chick </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  <!--[if lte IE 8]>
+  <div style=' clear: both; height: 59px; padding:0 0 0 15px; position: relative;margin:0 auto;'>
+    <a href="http://windows.microsoft.com/en-US/internet-explorer/products/ie/home?ocid=ie6_countdown_bannercode">
+      <img src="http://7u2nvr.com1.z0.glb.clouddn.com/picouterie.jpg" border="0" height="42" width="820"
+           alt="You are using an outdated browser. For a faster, safer browsing experience, upgrade for free today or use other browser ,like chrome firefox safari."
+           style='margin-left:auto;margin-right:auto;display: block;'/>
+    </a>
+  </div>
+<![endif]-->
+  
+
+
+
+
+
+
+  <div class="container one-column page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Lucky Chick</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">Enjoy Thinking, Creating and Coding (PHP Linux Javascript React ...)</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu ">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-th fa-fw"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-tags fa-fw"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-user fa-fw"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div id="content" class="content">
+          
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                微信分享类活动重构——监听者模式
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            发表于
+            <time itemprop="dateCreated" datetime="2016-04-26T23:37:59+08:00" content="2016-04-26">
+              2016-04-26
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp; 分类于
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/PHP/" itemprop="url" rel="index">
+                    <span itemprop="name">PHP</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/04/26/微信分享类活动重构——监听者模式/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/04/26/微信分享类活动重构——监听者模式/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body">
+
+      
+      
+
+      
+        <span itemprop="articleBody"><h1 id="u524D_u8A00"><a href="#u524D_u8A00" class="headerlink" title="前言"></a>前言</h1><p>在微信朋友圈中经常见到一种诱导分享型的活动，活动规则如：分享给3位好友，即可开启礼包，领取优惠券。整个流程大致分为：领取任务、朋友或自己帮忙执行任务、兑换奖品。因此我把它定义为任务型活动。</p>
+<p>在实现这类型活动的后端接口时，以最直接的MVC去实现了。但这样的活动，一两个月来一次，每次的任务规则，和兑换条件又有些许不一样。于是，顺其自然的在原有的基础上去增加case去区分逻辑，这样的处理方式使得Model层越来越臃肿。所以，决定用监听者模式去重构。</p>
+<h2 id="u4E00_u3001_u76EE_u5F55_u7ED3_u6784"><a href="#u4E00_u3001_u76EE_u5F55_u7ED3_u6784" class="headerlink" title="一、目录结构"></a>一、目录结构</h2><p><img src="http://upload-images.jianshu.io/upload_images/1413727-d57fa2bdfe1404ed.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="Paste_Image.png"></p>
+<ol>
+<li><p><strong>接口层</strong></p>
+<ul>
+<li>TaskController</li>
+</ul>
+</li>
+<li><p><strong>模型</strong></p>
+<ul>
+<li>TaskModel</li>
+</ul>
+</li>
+<li><p><strong>事件</strong></p>
+<ul>
+<li>基础类 Base</li>
+<li>领取任务 Receive</li>
+<li>朋友或自己帮忙执行任务 Execute</li>
+<li>兑换奖品 Exchange</li>
+</ul>
+</li>
+<li><p><strong>监听者</strong></p>
+<ul>
+<li>Common 公用处理逻辑</li>
+<li>Candle 点蜡烛活动的处理逻辑（举个栗子）</li>
+</ul>
+</li>
+</ol>
+<h2 id="u4E8C_u3001_u5904_u7406_u903B_u8F91_u2014-__u70B9_u8721_u70DB_u6D3B_u52A8_u4E3A_u4F8B"><a href="#u4E8C_u3001_u5904_u7406_u903B_u8F91_u2014-__u70B9_u8721_u70DB_u6D3B_u52A8_u4E3A_u4F8B" class="headerlink" title="二、处理逻辑—- 点蜡烛活动为例"></a>二、处理逻辑—- 点蜡烛活动为例</h2><p>活动规则：需要朋友好帮忙点亮3根蜡烛，才可兑换优惠券。</p>
+<p><small>ThinkPHP框架实现为例</small></p>
+<h3 id="TaskController"><a href="#TaskController" class="headerlink" title="TaskController"></a>TaskController</h3><p><small>统一处理接口，通过参数<code>activity</code>区分不同活动</small></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span><br><span class="line"> * 拆礼包一类任务活动的接口</span><br><span class="line"> * Class TaskController</span><br><span class="line"> * <span class="doctag">@package</span> Activity\Controller</span><br><span class="line"> */</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">TaskController</span> <span class="keyword">extends</span> <span class="title">ApiController</span></span><br><span class="line"></span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     * 领取活动任务</span><br><span class="line">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">receive_post</span><span class="params">()</span></span><br><span class="line">    </span>&#123;</span><br><span class="line">        <span class="comment">//获取参数</span></span><br><span class="line">        <span class="variable">$activity</span> = I(<span class="string">'request.activity'</span>, <span class="string">''</span>);<span class="comment">//不同活动，传不同活动指定的type</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">//其他逻辑...</span></span><br><span class="line">        <span class="variable">$param</span> = <span class="keyword">array</span>();</span><br><span class="line">        <span class="variable">$param</span>[<span class="string">'activity'</span>] = <span class="variable">$activity</span>;</span><br><span class="line"></span><br><span class="line">        <span class="variable">$taskModel</span> = D(<span class="string">'Activity/Task'</span>);</span><br><span class="line">        <span class="variable">$result</span> = <span class="variable">$taskModel</span>-&gt;receiveTask(<span class="variable">$param</span>);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">exit</span>(json_encode(<span class="variable">$result</span>));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     * （朋友帮我/自己）执行任务</span><br><span class="line">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">execute_post</span><span class="params">()</span></span><br><span class="line">    </span>&#123;</span><br><span class="line">        <span class="comment">//获取参数</span></span><br><span class="line">        <span class="variable">$activity</span> = I(<span class="string">'request.activity'</span>, <span class="string">''</span>);<span class="comment">//不同活动，传不同活动指定的type</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">//其他逻辑...</span></span><br><span class="line">        <span class="variable">$param</span> = <span class="keyword">array</span>();</span><br><span class="line">        <span class="variable">$param</span>[<span class="string">'activity'</span>] = <span class="variable">$activity</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">//朋友帮忙</span></span><br><span class="line">        <span class="variable">$taskModel</span> = D(<span class="string">'Activity/Task'</span>);</span><br><span class="line">        <span class="variable">$ret</span> = <span class="variable">$taskModel</span>-&gt;executeTask(<span class="variable">$param</span>);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">exit</span>(json_encode(<span class="variable">$result</span>));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     * 兑换礼品券</span><br><span class="line">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">exchange_post</span><span class="params">()</span></span><br><span class="line">    </span>&#123;</span><br><span class="line">        <span class="comment">//获取参数</span></span><br><span class="line">        <span class="variable">$activity</span> = I(<span class="string">'request.activity'</span>, <span class="string">''</span>);<span class="comment">//不同活动，传不同活动指定的type</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">//其他逻辑...</span></span><br><span class="line">        <span class="variable">$param</span> = <span class="keyword">array</span>();</span><br><span class="line">        <span class="variable">$param</span>[<span class="string">'activity'</span>] = <span class="variable">$activity</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">//朋友帮忙</span></span><br><span class="line">        <span class="variable">$taskModel</span> = D(<span class="string">'Activity/Task'</span>);</span><br><span class="line">        <span class="variable">$ret</span> = <span class="variable">$taskModel</span>-&gt;exchange(<span class="variable">$param</span>);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">exit</span>(json_encode(<span class="variable">$result</span>));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="TaskModel"><a href="#TaskModel" class="headerlink" title="TaskModel"></a>TaskModel</h3><p>Model层写上对应的执行方法</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">TaskModel</span> <span class="keyword">extends</span> <span class="title">DataModel</span></span><br><span class="line"></span>&#123;</span><br><span class="line">    <span class="comment">//属性...</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//其他方法...</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     * 领取任务（发起活动）</span><br><span class="line">     * <span class="doctag">@param</span> $param</span><br><span class="line">     * <span class="doctag">@return</span> array|bool</span><br><span class="line">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">receiveTask</span><span class="params">(<span class="variable">$param</span>)</span></span><br><span class="line">    </span>&#123;</span><br><span class="line">        <span class="comment">//领取任务</span></span><br><span class="line">        <span class="variable">$receiveEvent</span> = <span class="keyword">new</span> Event\Receive(<span class="variable">$param</span>);</span><br><span class="line">        <span class="variable">$ret</span> = <span class="variable">$receiveEvent</span>-&gt;execute();</span><br><span class="line">        <span class="keyword">if</span> (!<span class="variable">$ret</span>) &#123;</span><br><span class="line">            <span class="variable">$this</span>-&gt;errorCode = <span class="variable">$receiveEvent</span>-&gt;getErrorCode();</span><br><span class="line">            <span class="variable">$this</span>-&gt;errorDesc = <span class="variable">$receiveEvent</span>-&gt;getErrorMsg();</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     * （朋友帮我/自己）执行任务</span><br><span class="line">     * <span class="doctag">@param</span> $param</span><br><span class="line">     * <span class="doctag">@return</span> bool</span><br><span class="line">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">executeTask</span><span class="params">(<span class="variable">$param</span>)</span></span><br><span class="line">    </span>&#123;</span><br><span class="line">        <span class="comment">//执行任务</span></span><br><span class="line">        <span class="variable">$executeEvent</span> = <span class="keyword">new</span> Event\Execute(<span class="variable">$param</span>);</span><br><span class="line">        <span class="variable">$ret</span> = <span class="variable">$executeEvent</span>-&gt;execute();</span><br><span class="line">        <span class="keyword">if</span> (!<span class="variable">$ret</span>) &#123;</span><br><span class="line">            <span class="variable">$this</span>-&gt;errorCode = <span class="variable">$executeEvent</span>-&gt;getErrorCode();</span><br><span class="line">            <span class="variable">$this</span>-&gt;errorDesc = <span class="variable">$executeEvent</span>-&gt;getErrorMsg();</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     * 兑换礼品</span><br><span class="line">     * <span class="doctag">@param</span> $param</span><br><span class="line">     * <span class="doctag">@return</span> bool</span><br><span class="line">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">exchange</span><span class="params">(<span class="variable">$param</span>)</span></span><br><span class="line">    </span>&#123;</span><br><span class="line">        <span class="variable">$exchangeEvent</span> = <span class="keyword">new</span> Event\Exchange(<span class="variable">$param</span>);</span><br><span class="line">        <span class="variable">$ret</span> = <span class="variable">$exchangeEvent</span>-&gt;execute();</span><br><span class="line">        <span class="keyword">if</span> (!<span class="variable">$ret</span>) &#123;</span><br><span class="line">            <span class="variable">$this</span>-&gt;errorCode = <span class="variable">$exchangeEvent</span>-&gt;getErrorCode();</span><br><span class="line">            <span class="variable">$this</span>-&gt;errorDesc = <span class="variable">$exchangeEvent</span>-&gt;getErrorMsg();</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="Event_5CBase-class-php"><a href="#Event_5CBase-class-php" class="headerlink" title="Event\Base.class.php"></a>Event\Base.class.php</h3><h4 id="Base-class-php_u4E2D_u6838_u5FC3_u65B9_u6CD5execute"><a href="#Base-class-php_u4E2D_u6838_u5FC3_u65B9_u6CD5execute" class="headerlink" title="Base.class.php中核心方法execute"></a>Base.class.php中核心方法execute</h4><ul>
+<li>实例化对应的事件Listener</li>
+<li>循环处理预先定义所实例化的事件的三个过程on/before/after</li>
+<li>试过在其中的过程处理失败则返回，不往下执行</li>
+</ul>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span><br><span class="line"> * 任务型活动基类</span><br><span class="line"> * Class Base</span><br><span class="line"> * <span class="doctag">@package</span> Activity\Model\Task\Event</span><br><span class="line"> */</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Base</span></span><br><span class="line"></span>&#123;</span><br><span class="line">    <span class="comment">//设置监听者</span></span><br><span class="line">    <span class="keyword">protected</span> <span class="variable">$listeners</span> = <span class="keyword">array</span>(</span><br><span class="line">        <span class="string">'normal'</span> =&gt; <span class="keyword">array</span>(</span><br><span class="line">            <span class="string">'before'</span> =&gt; <span class="keyword">array</span>(),</span><br><span class="line">            <span class="string">'on'</span> =&gt; <span class="keyword">array</span>(),</span><br><span class="line">            <span class="string">'after'</span> =&gt; <span class="keyword">array</span>()</span><br><span class="line">        )</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    <span class="keyword">protected</span> <span class="variable">$errorCode</span> = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">protected</span> <span class="variable">$errorMsg</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">protected</span> <span class="variable">$actionName</span>;</span><br><span class="line">    <span class="keyword">protected</span> <span class="variable">$activityType</span> = <span class="string">'normal'</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="variable">$activityInfo</span> = <span class="keyword">array</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">/*</span><br><span class="line">     * 获取listerner实例</span><br><span class="line">     */</span></span><br><span class="line">    <span class="keyword">private</span> <span class="function"><span class="keyword">function</span> <span class="title">getListener</span><span class="params">(<span class="variable">$listenerName</span>)</span></span><br><span class="line">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> <span class="variable">$listenerName</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/*</span><br><span class="line">     * 执行</span><br><span class="line">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">execute</span><span class="params">()</span></span><br><span class="line">    </span>&#123;</span><br><span class="line">        <span class="variable">$actionName</span> = get_class(<span class="variable">$this</span>);<span class="comment">//   Activity\Model\Task\Event\Receive</span></span><br><span class="line">        <span class="keyword">foreach</span> (<span class="keyword">array</span>(<span class="string">'before'</span>, <span class="string">'on'</span>, <span class="string">'after'</span>) <span class="keyword">as</span> <span class="variable">$when</span>) &#123;</span><br><span class="line">            <span class="keyword">foreach</span> (<span class="variable">$this</span>-&gt;listeners[<span class="variable">$this</span>-&gt;activityType][<span class="variable">$when</span>] <span class="keyword">as</span> <span class="variable">$listenerName</span>) &#123;</span><br><span class="line">                <span class="variable">$listener</span> = <span class="variable">$this</span>-&gt;getListener(<span class="variable">$listenerName</span>);</span><br><span class="line">                <span class="variable">$methodName</span> = <span class="variable">$when</span> . <span class="variable">$actionName</span>;</span><br><span class="line">                <span class="keyword">if</span> (method_exists(<span class="variable">$listener</span>, <span class="variable">$methodName</span>)) &#123;</span><br><span class="line">                    <span class="variable">$ret</span> = <span class="variable">$listener</span>-&gt;<span class="variable">$methodName</span>(<span class="variable">$this</span>);</span><br><span class="line">                    <span class="keyword">if</span> (!<span class="variable">$ret</span>) &#123;</span><br><span class="line">                        <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/*</span><br><span class="line">     * 拒绝\终止</span><br><span class="line">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">error</span><span class="params">(<span class="variable">$code</span>, <span class="variable">$msg</span>)</span></span><br><span class="line">    </span>&#123;</span><br><span class="line">        <span class="variable">$this</span>-&gt;errorCode = <span class="variable">$code</span>;</span><br><span class="line">        <span class="variable">$this</span>-&gt;errorMsg = <span class="variable">$msg</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">getErrorCode</span><span class="params">()</span></span><br><span class="line">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="variable">$this</span>-&gt;errorCode;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">getErrorMsg</span><span class="params">()</span></span><br><span class="line">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="variable">$this</span>-&gt;errorMsg;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="u4E3A_u4E86_u8BF4_u660E_u6B64_u6A21_u5F0F_u80FD_u591F_u6BD4_u8F83_u597D_u7684_u5904_u7406_u300C_u6BCF_u4E2A_u6D3B_u52A8_u90FD_u4F1A_u6709_u4E9B_u8BB8_u4E0D_u4E00_u6837_u300D_u7684_u60C5_u51B5_uFF0C_u4EE5_u670B_u53CB_u5E2E_u5FD9_u6267_u884C_u4EFB_u52A1_u4E3A_u4F8B_u5B50_u3002"><a href="#u4E3A_u4E86_u8BF4_u660E_u6B64_u6A21_u5F0F_u80FD_u591F_u6BD4_u8F83_u597D_u7684_u5904_u7406_u300C_u6BCF_u4E2A_u6D3B_u52A8_u90FD_u4F1A_u6709_u4E9B_u8BB8_u4E0D_u4E00_u6837_u300D_u7684_u60C5_u51B5_uFF0C_u4EE5_u670B_u53CB_u5E2E_u5FD9_u6267_u884C_u4EFB_u52A1_u4E3A_u4F8B_u5B50_u3002" class="headerlink" title="为了说明此模式能够比较好的处理「每个活动都会有些许不一样」的情况，以朋友帮忙执行任务为例子。"></a>为了说明此模式能够比较好的处理「每个活动都会有些许不一样」的情况，以朋友帮忙执行任务为例子。</h4><p><small>因为朋友帮忙执行任务前，判断是否允许帮的条件会有所不同</small></p>
+<p>Event\Execute.class.php</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span><br><span class="line"> * 执行任务</span><br><span class="line"> * Class Execute</span><br><span class="line"> * <span class="doctag">@package</span> Activity\Model\Task\Event</span><br><span class="line"> */</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Execute</span> <span class="keyword">extends</span> <span class="title">Base</span></span><br><span class="line"></span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">__construct</span><span class="params">(<span class="variable">$activityInfo</span>)</span></span><br><span class="line">    </span>&#123;</span><br><span class="line">        <span class="comment">//设置监听者</span></span><br><span class="line">        <span class="variable">$this</span>-&gt;listeners = <span class="keyword">array</span>(</span><br><span class="line">            <span class="string">'light_candle'</span> =&gt; <span class="keyword">array</span>(</span><br><span class="line">                <span class="string">'before'</span> =&gt; <span class="keyword">array</span>(<span class="string">'Common'</span>, <span class="string">'Candle'</span>),</span><br><span class="line">                <span class="string">'on'</span> =&gt; <span class="keyword">array</span>(<span class="string">'Common'</span>),</span><br><span class="line">                <span class="string">'after'</span> =&gt; <span class="keyword">array</span>(<span class="string">'Common'</span>)</span><br><span class="line">            )</span><br><span class="line">        );</span><br><span class="line">        <span class="variable">$this</span>-&gt;activityType = <span class="variable">$activityInfo</span>[<span class="string">'act'</span>];</span><br><span class="line"></span><br><span class="line">        <span class="variable">$this</span>-&gt;activityInfo = <span class="variable">$activityInfo</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">execute</span><span class="params">()</span></span><br><span class="line">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">parent</span>::execute();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>设置监听者</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//比如设置监听者</span></span><br><span class="line"><span class="variable">$this</span>-&gt;listeners = <span class="keyword">array</span>(</span><br><span class="line">    <span class="string">'light_candle'</span> =&gt; <span class="keyword">array</span>(</span><br><span class="line">        <span class="string">'before'</span> =&gt; <span class="keyword">array</span>(<span class="string">'Common'</span>, <span class="string">'Candle'</span>),</span><br><span class="line">        <span class="string">'on'</span> =&gt; <span class="keyword">array</span>(<span class="string">'Common'</span>),</span><br><span class="line">        <span class="string">'after'</span> =&gt; <span class="keyword">array</span>(<span class="string">'Common'</span>)</span><br><span class="line">    )</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+<p><strong><code>light_candle</code>接口层接收到的活动type，即参数<code>activity</code>。</strong></p>
+<p>‘before’=&gt;array(‘Common’, ‘Candle’)，<strong>代表before阶段执行的Listener。</strong>on和after如是。</p>
+<p>那么如此配置后，light_candle活动Execute事件的执行过程调用顺序是：</p>
+<ol>
+<li>Listener\Common.class.php的beforeExecute</li>
+<li>Listener\Candle.class.php的beforeExecute</li>
+<li>Listener\Common.class.php的onExecute</li>
+<li>Listener\Common.class.php的afterExecute</li>
+</ol>
+<p><strong>所以公共的逻辑可以放到Common的Listener中，每个活动的差异逻辑新建一个对应活动的Listener中，即使再多的活动，也不会耦合，而且每次活动只需要修改差异逻辑即可，大大减少开始和调试时间。</strong></p>
+<h2 id="u4E09_u3001_u65B0_u5EFA_u6D3B_u52A8"><a href="#u4E09_u3001_u65B0_u5EFA_u6D3B_u52A8" class="headerlink" title="三、新建活动"></a>三、新建活动</h2><p>三个步骤：</p>
+<ol>
+<li>定义活动的activity。</li>
+<li><p>在Event\Receive、Event\Execute、Event\Exchange中设置对应活动的监听者。如：</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//比如设置监听者</span></span><br><span class="line"><span class="variable">$this</span>-&gt;listeners = <span class="keyword">array</span>(</span><br><span class="line"><span class="string">'light_candle'</span> =&gt; <span class="keyword">array</span>(</span><br><span class="line"><span class="string">'before'</span> =&gt; <span class="keyword">array</span>(<span class="string">'Common'</span>),</span><br><span class="line"><span class="string">'on'</span> =&gt; <span class="keyword">array</span>(<span class="string">'Common'</span>),</span><br><span class="line"><span class="string">'after'</span> =&gt; <span class="keyword">array</span>(<span class="string">'Common'</span>)</span><br><span class="line">),</span><br><span class="line"><span class="comment">//增加活动</span></span><br><span class="line"><span class="string">'activity1'</span> =&gt; <span class="keyword">array</span>(</span><br><span class="line"><span class="string">'before'</span> =&gt; <span class="keyword">array</span>(<span class="string">'Common'</span>, ...),</span><br><span class="line"><span class="string">'on'</span> =&gt; <span class="keyword">array</span>(<span class="string">'Common'</span>, ...),</span><br><span class="line"><span class="string">'after'</span> =&gt; <span class="keyword">array</span>(<span class="string">'Common'</span>, ...)</span><br><span class="line">),</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>新建Listener，编写当前活动的差异代码。完成</p>
+</li>
+</ol>
+<h2 id="u4E94_u3001_u7ED3_u8BED"><a href="#u4E94_u3001_u7ED3_u8BED" class="headerlink" title="五、结语"></a>五、结语</h2><p>当我完成了重构完，有效提升了开发效率以后。微信要发布了公众号活动xxx规定，封杀了此类分享活动。。。</p>
+<p>======================================</p>
+<p><strong>Listener\Common的demo伪代码</strong></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span><br><span class="line"> * 拆礼包一类活动的的通用逻辑</span><br><span class="line"> * Class Common</span><br><span class="line"> * <span class="doctag">@package</span> Activity\Model\Task\Listener</span><br><span class="line"> */</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Common</span></span><br><span class="line"></span>&#123;</span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     * 发起活动前，检查是否有发起过活动</span><br><span class="line">     * <span class="doctag">@param</span> Receive $receive</span><br><span class="line">     * <span class="doctag">@return</span> bool</span><br><span class="line">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">beforeReceive</span><span class="params">(Receive &amp;<span class="variable">$receive</span>)</span></span><br><span class="line">    </span>&#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     * 发起活动过程</span><br><span class="line">     * <span class="doctag">@param</span> Receive $receive</span><br><span class="line">     * <span class="doctag">@return</span> bool</span><br><span class="line">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">onReceive</span><span class="params">(Receive &amp;<span class="variable">$receive</span>)</span></span><br><span class="line">    </span>&#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     * 成功发起活动之后</span><br><span class="line">     * <span class="doctag">@param</span> Receive $receive</span><br><span class="line">     * <span class="doctag">@return</span> bool</span><br><span class="line">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">afterReceive</span><span class="params">(Receive &amp;<span class="variable">$receive</span>)</span></span><br><span class="line">    </span>&#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     * 朋友帮忙前</span><br><span class="line">     * <span class="doctag">@param</span> Execute $execute</span><br><span class="line">     * <span class="doctag">@return</span> bool</span><br><span class="line">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">beforeExecute</span><span class="params">(Execute &amp;<span class="variable">$execute</span>)</span></span><br><span class="line">    </span>&#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     * 朋友帮忙过程</span><br><span class="line">     * <span class="doctag">@param</span> Execute $execute</span><br><span class="line">     * <span class="doctag">@return</span> mixed</span><br><span class="line">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">onExecute</span><span class="params">(Execute &amp;<span class="variable">$execute</span>)</span></span><br><span class="line">    </span>&#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     * 朋友成功帮忙以后</span><br><span class="line">     * <span class="doctag">@param</span> Execute $execute</span><br><span class="line">     * <span class="doctag">@return</span> bool</span><br><span class="line">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">afterExecute</span><span class="params">(Execute &amp;<span class="variable">$execute</span>)</span></span><br><span class="line">    </span>&#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     * 兑换礼品前</span><br><span class="line">     * <span class="doctag">@param</span> Exchange $exchange</span><br><span class="line">     * <span class="doctag">@return</span> bool</span><br><span class="line">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">beforeExchange</span><span class="params">(Exchange <span class="variable">$exchange</span>)</span></span><br><span class="line">    </span>&#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     * 兑换以后，刷新兑换的字段缓存</span><br><span class="line">     * <span class="doctag">@param</span> Exchange $exchange</span><br><span class="line">     * <span class="doctag">@return</span> bool</span><br><span class="line">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">afterExchange</span><span class="params">(Exchange &amp;<span class="variable">$exchange</span>)</span></span><br><span class="line">    </span>&#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</span>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/PHP/" rel="tag">#PHP</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/04/26/HTTP学习笔记-2/" rel="next" title="HTTP学习笔记#2">
+                <i class="fa fa-chevron-left"></i> HTTP学习笔记#2
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+        </div>
+
+        
+
+
+        
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/04/26/微信分享类活动重构——监听者模式/"
+           data-title="微信分享类活动重构——监听者模式" data-url="http://beckjiang.github.io/2016/04/26/微信分享类活动重构——监听者模式/">
+      </div>
+    
+  </div>
+
+
+      </div>
+
+      
+        
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" src="http://d01.res.meilishuo.net/pic/_o/65/43/3a0461bc73c036adba76491d50f1_500_500.c1.jpg" alt="Beck Jiang" itemprop="image"/>
+          <p class="site-author-name" itemprop="name">Beck Jiang</p>
+        </div>
+        <p class="site-description motion-element" itemprop="description">求知若饥 虚心若愚</p>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">5</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          <div class="site-state-item site-state-categories">
+            <a href="/categories">
+              <span class="site-state-item-count">4</span>
+              <span class="site-state-item-name">分类</span>
+              </a>
+          </div>
+
+          <div class="site-state-item site-state-tags">
+            <a href="/tags">
+              <span class="site-state-item-count">4</span>
+              <span class="site-state-item-name">标签</span>
+              </a>
+          </div>
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator">
+            <i class="fa fa-angle-double-up"></i>
+          </div>
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#u524D_u8A00"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#u4E00_u3001_u76EE_u5F55_u7ED3_u6784"><span class="nav-number">1.1.</span> <span class="nav-text">一、目录结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#u4E8C_u3001_u5904_u7406_u903B_u8F91_u2014-__u70B9_u8721_u70DB_u6D3B_u52A8_u4E3A_u4F8B"><span class="nav-number">1.2.</span> <span class="nav-text">二、处理逻辑—- 点蜡烛活动为例</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#TaskController"><span class="nav-number">1.2.1.</span> <span class="nav-text">TaskController</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#TaskModel"><span class="nav-number">1.2.2.</span> <span class="nav-text">TaskModel</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Event_5CBase-class-php"><span class="nav-number">1.2.3.</span> <span class="nav-text">Event\Base.class.php</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Base-class-php_u4E2D_u6838_u5FC3_u65B9_u6CD5execute"><span class="nav-number">1.2.3.1.</span> <span class="nav-text">Base.class.php中核心方法execute</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#u4E3A_u4E86_u8BF4_u660E_u6B64_u6A21_u5F0F_u80FD_u591F_u6BD4_u8F83_u597D_u7684_u5904_u7406_u300C_u6BCF_u4E2A_u6D3B_u52A8_u90FD_u4F1A_u6709_u4E9B_u8BB8_u4E0D_u4E00_u6837_u300D_u7684_u60C5_u51B5_uFF0C_u4EE5_u670B_u53CB_u5E2E_u5FD9_u6267_u884C_u4EFB_u52A1_u4E3A_u4F8B_u5B50_u3002"><span class="nav-number">1.2.3.2.</span> <span class="nav-text">为了说明此模式能够比较好的处理「每个活动都会有些许不一样」的情况，以朋友帮忙执行任务为例子。</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#u4E09_u3001_u65B0_u5EFA_u6D3B_u52A8"><span class="nav-number">1.3.</span> <span class="nav-text">三、新建活动</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#u4E94_u3001_u7ED3_u8BED"><span class="nav-number">1.4.</span> <span class="nav-text">五、结语</span></a></li></ol></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator">
+            <i class="fa fa-angle-double-down"></i>
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+      
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="icon-next-heart fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Beck Jiang</span>
+</div>
+
+<div class="powered-by">
+  Power by <a class="theme-link" href="http://hexo.io">Hexo</a> 
+</div>
+
+<div class="theme-info">
+  Base on -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top"></div>
+  </div>
+
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  
+
+  
+    
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"beckjiang"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+    
+     
+
+
+    
+  
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript" src="/js/fancy-box.js?v=0.4.5.2"></script>
+
+
+  <script type="text/javascript" src="/js/helpers.js?v=0.4.5.2"></script>
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+<script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+<script type="text/javascript" src="/js/motion.js?v=0.4.5.2" id="motion.global"></script>
+
+
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  
+<script type="text/javascript" src="/js/bootstrap.scrollspy.js?v=0.4.5.2" id="bootstrap.scrollspy.custom"></script>
+
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 1 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    motionMiddleWares.sidebar = function () {
+      var $tocContent = $('.post-toc-content');
+      if (CONFIG.sidebar === 'post') {
+        if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+          displaySidebar();
+        }
+      }
+    };
+  });
+</script>
+
+
+
+  <script type="text/javascript" src="/js/bootstrap.js"></script>
+
+  
+  
+
+  
+  
+
+</body>
+</html>
